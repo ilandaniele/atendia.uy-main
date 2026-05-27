@@ -19,6 +19,12 @@ export default [
             route("callback", "routes/api/google-calendar/callback.ts"),
             route("exchange", "routes/api/google-calendar/exchange.ts"),
         ]),
+        // Google Drive
+        ...prefix("google-drive", [
+            route("auth", "routes/api/google-drive/auth.ts"),
+            route("callback", "routes/api/google-drive/callback.ts"),
+            route("exchange", "routes/api/google-drive/exchange.ts"),
+        ]),
         ...prefix("webhooks", [
             route("/whapi/:channelId", "routes/api/webhooks/whapi.ts"),
             route("/dlocal", "routes/api/webhooks/dlocal.ts"),

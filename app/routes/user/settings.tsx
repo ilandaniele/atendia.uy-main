@@ -13,7 +13,9 @@ import {
     FaPhone,
     FaMicrophone,
     FaClock,
+    FaGoogleDrive,
 } from "react-icons/fa6";
+import GoogleDriveTab from "./components/google-drive-tab";
 import { usePushNotifications } from "~/hooks/usePushNotifications";
 import { toast } from "react-toastify";
 import { cn } from "utils/utils";
@@ -56,6 +58,7 @@ const NAV_SECTIONS = [
     { id: "miembros",       label: "Equipo",          Icon: FaUsers        },
     { id: "notificaciones", label: "Notificaciones",  Icon: FaBell         },
     { id: "webhooks",       label: "Webhooks",        Icon: FaBolt         },
+    { id: "google_drive",   label: "Google Drive",    Icon: FaGoogleDrive  },
 ] as const;
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -795,6 +798,22 @@ export default function UserSettings() {
                         ¿Cómo funciona? Ver guía
                     </button>
                 </div>
+            </Section>
+
+            {/* ── Google Drive ─────────────────────────────────────────────── */}
+            <Section
+                id="google_drive"
+                icon={<FaGoogleDrive className="w-4 h-4" />}
+                title="Google Drive"
+                description="Vinculá archivos de Drive (Excel, Sheets, Docs, PDF) y mantenelos sincronizados automáticamente."
+            >
+                {clientId && (
+                    <GoogleDriveTab
+                        clientId={clientId}
+                        isOwner={isOwner}
+                        intervalMinutes={client?.config?.driveSyncIntervalMinutes ?? 15}
+                    />
+                )}
             </Section>
                 </div>{/* end flex-1 content */}
             </div>{/* end flex gap-8 */}

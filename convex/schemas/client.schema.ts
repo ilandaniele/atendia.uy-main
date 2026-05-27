@@ -21,6 +21,13 @@ export const ClientSchema = defineTable({
             closeTime: v.string(),
         }))),
         currency: v.optional(v.string()),
+        driveSyncIntervalMinutes: v.optional(v.union(
+            v.literal(5),
+            v.literal(15),
+            v.literal(30),
+            v.literal(60),
+        )),
+        driveLastDispatchAt: v.optional(v.number()),
     }),
     features: v.object({
         enableAgenda: v.boolean(),

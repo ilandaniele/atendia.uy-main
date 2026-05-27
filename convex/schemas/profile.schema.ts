@@ -27,6 +27,11 @@ export const ProfileSchema = defineTable({
     googleCalendarChannelId: v.optional(v.string()),
     googleCalendarResourceId: v.optional(v.string()),
     googleCalendarChannelExpiry: v.optional(v.number()),
+
+    googleDriveRefreshToken: v.optional(v.string()),
+    googleDriveEnabled: v.optional(v.boolean()),
+    googleDriveEmail: v.optional(v.string()),
+    googleDriveConnectedAt: v.optional(v.number()),
 })
 .index("by_name", ["name"])
 .index("by_email", ["email"])
