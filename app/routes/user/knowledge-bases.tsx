@@ -1616,7 +1616,12 @@ function humanizeDriveLinkError(code: string): string {
     if (code === "knowledge_base_not_found") return "La base de conocimiento no existe.";
     if (code === "pdf_unsupported") return "PDFs aún no están soportados. Por ahora podés vincular Excel, Sheets y Docs.";
     if (code.startsWith("unsupported_mime")) return "Tipo de archivo no soportado (solo Excel, Sheets y Docs por ahora).";
-    if (code.startsWith("drive_fetch_failed")) return "Atendia no pudo leer el archivo. Verificá permisos en Drive.";
+    if (code.startsWith("drive_fetch_failed")) {
+        const detail = code.slice("drive_fetch_failed:".length).trim();
+        return detail
+            ? `Drive rechazó la petición: ${detail}`
+            : "Atendia no pudo leer el archivo. Verificá permisos en Drive.";
+    }
     return "No se pudo vincular el archivo.";
 }
 

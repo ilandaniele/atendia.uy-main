@@ -28,7 +28,19 @@ type Props = {
     intervalMinutes: number;
 };
 
-const INTERVAL_OPTIONS = [5, 15, 30, 60] as const;
+type IntervalMinutes = 5 | 15 | 30 | 60 | 360 | 720 | 1440 | 10080 | 43200;
+
+const INTERVAL_OPTIONS: { value: IntervalMinutes; label: string }[] = [
+    { value: 5,     label: "Cada 5 minutos" },
+    { value: 15,    label: "Cada 15 minutos" },
+    { value: 30,    label: "Cada 30 minutos" },
+    { value: 60,    label: "Cada hora" },
+    { value: 360,   label: "Cada 6 horas" },
+    { value: 720,   label: "Cada 12 horas" },
+    { value: 1440,  label: "Cada día" },
+    { value: 10080, label: "Cada semana" },
+    { value: 43200, label: "Cada mes (~30 días)" },
+];
 
 export default function GoogleDriveTab({ clientId, isOwner, intervalMinutes }: Props) {
     const status = useQuery(api.googleDriveDb.getStatus);
@@ -120,15 +132,12 @@ export default function GoogleDriveTab({ clientId, isOwner, intervalMinutes }: P
     };
 
     const handleIntervalChange = async (newInterval: number) => {
-        const valid = (INTERVAL_OPTIONS as readonly number[]).includes(newInterval);
-        if (!valid) return;
+        const match = INTERVAL_OPTIONS.find((o) => o.value === newInterval);
+        if (!match) return;
         setIntervalSaving(true);
         try {
-            await updateInterval({
-                clientId,
-                intervalMinutes: newInterval as 5 | 15 | 30 | 60,
-            });
-            toast.success(`Frecuencia actualizada a cada ${newInterval} minutos.`);
+            await updateInterval({ clientId, intervalMinutes: match.value });
+            toast.success(`Frecuencia actualizada: ${match.label.toLowerCase()}.`);
         } catch {
             toast.error("No se pudo actualizar la frecuencia.");
         } finally {
@@ -281,9 +290,9 @@ function IntervalBlock({
                         onChange={(e) => onChange(Number(e.target.value))}
                         className="px-3 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
                     >
-                        {INTERVAL_OPTIONS.map((m) => (
-                            <option key={m} value={m}>
-                                Cada {m} min
+                        {INTERVAL_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                                {opt.label}
                             </option>
                         ))}
                     </select>
@@ -595,6 +604,11 @@ function humanizeLinkError(code: string): string {
     if (code === "knowledge_base_not_found") return "La base de conocimiento seleccionada no existe.";
     if (code === "pdf_unsupported") return "PDFs aún no están soportados (próximamente). Por ahora podés vincular Excel, Sheets y Docs.";
     if (code.startsWith("unsupported_mime")) return "Ese tipo de archivo no está soportado (solo Excel, Sheets y Docs por ahora).";
-    if (code.startsWith("drive_fetch_failed")) return "Atendia no pudo leer el archivo. Verificá los permisos de Drive.";
+    if (code.startsWith("drive_fetch_failed")) {
+        const detail = code.slice("drive_fetch_failed:".length).trim();
+        return detail
+            ? `Drive rechazó la petición: ${detail}`
+            : "Atendia no pudo leer el archivo. Verificá los permisos de Drive.";
+    }
     return "No se pudo vincular el archivo.";
 }
