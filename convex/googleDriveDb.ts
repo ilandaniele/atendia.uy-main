@@ -24,7 +24,9 @@ export const listForClient = query({
         await requireClientAccess(ctx, clientId);
         const links = await ctx.db
             .query("linked_drive_files")
-            .withIndex("by_client", (q) => q.eq("client", clientId))
+            .withIndex("by_client_and_active", (q) =>
+                q.eq("client", clientId).eq("isActive", true),
+            )
             .collect();
 
         const kbsById = new Map<string, string>();
@@ -103,8 +105,14 @@ export const manualSync = mutation({
         const link = await ctx.db.get(linkId);
         if (!link) throw new Error("Vinculación no encontrada");
         await requireClientAccess(ctx, link.client);
-        // Force re-sync by clearing lastCheckedAt (otherwise the 30s race-guard skips us).
-        await ctx.db.patch(linkId, { lastCheckedAt: undefined });
+        // Force a full re-ingest (not just a metadata check). Cron-driven syncs
+        // skip when Drive's modifiedTime is unchanged, but a user clicking
+        // "Sync now" explicitly wants the latest content re-pulled — e.g. after
+        // a parser change. Clear both gates so syncSingleFile always re-ingests.
+        await ctx.db.patch(linkId, {
+            lastCheckedAt: undefined,
+            lastSyncedModifiedTime: undefined,
+        });
         await ctx.scheduler.runAfter(0, internal.googleDrive.syncSingleFile, { linkId });
     },
 });
@@ -117,6 +125,11 @@ export const updateSyncInterval = mutation({
             v.literal(15),
             v.literal(30),
             v.literal(60),
+            v.literal(360),
+            v.literal(720),
+            v.literal(1440),
+            v.literal(10080),
+            v.literal(43200),
         ),
     },
     handler: async (ctx, { clientId, intervalMinutes }) => {

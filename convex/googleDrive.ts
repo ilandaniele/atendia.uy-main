@@ -312,15 +312,26 @@ async function ingestForKind(
 
 function spreadsheetToRows(buffer: Buffer): string[] {
     const sheets = xlsx.parse(buffer);
+    const nonEmptySheets = sheets.filter((s) => {
+        const data = s.data as unknown[][] | undefined;
+        return Array.isArray(data) && data.length > 1;
+    });
+    const multiSheet = nonEmptySheets.length > 1;
     const rows: string[] = [];
-    for (const sheet of sheets) {
+    for (const sheet of nonEmptySheets) {
         const data = sheet.data as unknown[][];
-        if (!data || data.length === 0) continue;
         const header = (data[0] ?? []).map((c) => String(c ?? "").trim());
+        const sheetName = String(sheet.name ?? "").trim();
         for (let i = 1; i < data.length; i++) {
             const row = data[i];
             if (!row || row.every((c) => c == null || c === "")) continue;
             const lines: string[] = [];
+            // Label each row with its source tab when the workbook has multiple
+            // tabs — gives the AI enough context to tell "Stock: 10 (Inventario)"
+            // apart from "Stock: 10 (Pedidos)".
+            if (multiSheet && sheetName) {
+                lines.push(`Hoja: ${sheetName}`);
+            }
             for (let j = 0; j < header.length; j++) {
                 const val = row[j];
                 if (val == null || val === "") continue;

@@ -25,7 +25,12 @@ export const ClientSchema = defineTable({
             v.literal(5),
             v.literal(15),
             v.literal(30),
-            v.literal(60),
+            v.literal(60),     // 1 hour
+            v.literal(360),    // 6 hours
+            v.literal(720),    // 12 hours
+            v.literal(1440),   // 1 day
+            v.literal(10080),  // 1 week
+            v.literal(43200),  // 30 days (≈ 1 month)
         )),
         driveLastDispatchAt: v.optional(v.number()),
     }),
