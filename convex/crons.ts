@@ -46,4 +46,12 @@ crons.daily(
     internal.impersonation.purgeOld,
 );
 
+// Drive sync dispatcher: fires every 5 min, per-client gating uses
+// client.config.driveSyncIntervalMinutes (default 15).
+crons.interval(
+    "Despachar sincronizacion de archivos de Google Drive",
+    { minutes: 5 },
+    internal.googleDrive.dispatchDriveSyncs,
+);
+
 export default crons;

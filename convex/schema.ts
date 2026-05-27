@@ -30,6 +30,7 @@ import { ExcelImportSchema } from "./schemas/excel-import.schema";
 import { ExcelImportRowSchema } from "./schemas/excel-import-row.schema";
 import { ContactSchema } from "./schemas/contact.schema";
 import { ImpersonationSessionSchema } from "./schemas/impersonation-session.schema";
+import { LinkedDriveFileSchema } from "./schemas/linked-drive-file.schema";
 
 export default defineSchema({
     ...authTables,
@@ -51,6 +52,7 @@ export default defineSchema({
     knowledge_chunks: KnowledgeChunkSchema,
     knowledge_embeddings: KnowledgeEmbeddingSchema,
     leads: LeadSchema,
+    linked_drive_files: LinkedDriveFileSchema,
     orders: OrderSchema,
     plans: PlanSchema,
     faq: FaqSchema,

@@ -35,6 +35,8 @@ import type * as faq from "../faq.js";
 import type * as faqAI from "../faqAI.js";
 import type * as googleCalendar from "../googleCalendar.js";
 import type * as googleCalendarDb from "../googleCalendarDb.js";
+import type * as googleDrive from "../googleDrive.js";
+import type * as googleDriveDb from "../googleDriveDb.js";
 import type * as http from "../http.js";
 import type * as impersonation from "../impersonation.js";
 import type * as invites from "../invites.js";
@@ -96,6 +98,8 @@ declare const fullApi: ApiFromModules<{
   faqAI: typeof faqAI;
   googleCalendar: typeof googleCalendar;
   googleCalendarDb: typeof googleCalendarDb;
+  googleDrive: typeof googleDrive;
+  googleDriveDb: typeof googleDriveDb;
   http: typeof http;
   impersonation: typeof impersonation;
   invites: typeof invites;

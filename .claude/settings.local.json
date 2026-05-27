@@ -14,7 +14,9 @@
       "Bash(curl -sS -o /tmp/atendia-root.html -w \"HTTP %{http_code} | %{size_download} bytes | %{time_total}s\\\\n\" http://localhost:5173/)",
       "Read(//tmp/**)",
       "Bash(npx @convex-dev/auth)",
-      "WebFetch(domain:whapi.cloud)"
+      "WebFetch(domain:whapi.cloud)",
+      "Bash(npm uninstall *)",
+      "Bash(echo \"EXIT=$?\")"
     ]
   }
 }
