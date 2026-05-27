@@ -14,54 +14,168 @@ Atendia users connect their Google Drive (read-only OAuth scope), paste a Drive 
 
 ## 1. Pre-deployment: Google Cloud Console setup
 
-All under **the same Google Cloud project** that hosts your existing Calendar / login OAuth credentials. Reuse the same OAuth Web Application client — it's just credentials, scopes are configured at the consent-screen level.
+All steps live under **a single Google Cloud project** — the same one that hosts your existing Calendar / login OAuth credentials. Reuse the same OAuth Web Application client; OAuth scopes are configured at the consent-screen level, not the client level.
 
-### 1.1 Enable the Drive API
+**Time required:** ~10 minutes if the project + consent screen already exist. ~30 minutes if starting from scratch.
 
-This is the easiest one to miss — OAuth can succeed yet every Drive API call fails with `Google Drive API has not been used in project <id>...`.
+### 1.0 Prerequisites: confirm you have a Google Cloud project
 
+Open https://console.cloud.google.com/ → top bar → **project selector** (the dropdown next to "Google Cloud").
+
+**If you already have an Atendia project** (e.g. you set up Google OAuth login earlier): pick it. Note the **Project ID** shown in the project info card on the home page — it looks like `ascendia-dev-497614`. Keep this ID handy; URLs in the steps below need it.
+
+**If you don't have one yet:**
+1. Project selector → **New Project**
+2. **Project name**: e.g. `Atendia Production`
+3. **Organization / Location**: pick yours (or "No organization" for personal)
+4. **Create** → wait ~30 seconds → switch to the new project from the dropdown
+5. Note the auto-generated **Project ID** (it's *not* the project name — it's a unique slug like `atendia-prod-499821`)
+
+### 1.1 Find your Project ID and Project Number
+
+You'll need both:
+- **Project ID** (string, e.g. `ascendia-dev-497614`) — used in URLs and `gcloud` commands
+- **Project Number** (numeric, e.g. `269432817235`) — appears in OAuth client IDs and some error messages
+
+Both are visible at https://console.cloud.google.com/welcome → "Project info" card on the home page. Copy them to a scratchpad — you'll paste them into URLs throughout this section.
+
+### 1.2 Enable the Google Drive API
+
+> ⚠ **Easiest step to forget.** OAuth can succeed entirely yet every Drive API call returns `Google Drive API has not been used in project <id> before or it is disabled`. The user-facing error in Atendia surfaces this message verbatim now (PR #3), but you can skip the user-side error by enabling it preemptively.
+
+**Direct URL** (replace `<PROJECT_ID>`):
 ```
-https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=<YOUR_PROJECT_ID>
-```
-
-Click **Enable**. Wait 1-2 minutes for propagation.
-
-### 1.2 Add `drive.readonly` scope to the OAuth consent screen
-
-URL: `https://console.cloud.google.com/auth/scopes` (with the right project selected)
-
-1. **Add or remove scopes**
-2. Search `drive.readonly`
-3. Tick `https://www.googleapis.com/auth/drive.readonly` — *"See and download all your Google Drive files"*
-4. **Update** → **Save**
-
-**Note:** this is a Google **Restricted** scope. Implications:
-- During Testing mode → fine, but each user must be added as a test user
-- For Production → requires Google verification + third-party security assessment ($5k–$15k/yr from Bishop Fox / Leviathan / etc.)
-- Alternative if you skip verification: use `drive.file` scope + Google Picker (see § 8)
-
-### 1.3 Add the Drive callback redirect URI to your OAuth client
-
-URL: `https://console.cloud.google.com/auth/clients` → click your Web client → **Authorized redirect URIs** → **Add URI**:
-
-```
-https://<YOUR_PROD_DOMAIN>/api/google-drive/callback
-```
-
-Replace `<YOUR_PROD_DOMAIN>` with the production `VITE_SITE_URL` host (e.g. `https://atendia.uy/api/google-drive/callback`).
-
-If you want to keep local dev working from the same OAuth client, also add:
-```
-http://localhost:5173/api/google-drive/callback
+https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=<PROJECT_ID>
 ```
 
-### 1.4 Test users (Testing mode only)
+Steps:
+1. Open the URL above with your project ID
+2. You'll see a "Google Drive API" page with a big blue **Enable** button at the top
+3. Click **Enable**
+4. The button changes to "Manage" → API is now enabled
+5. **Wait 1-2 minutes** for propagation across Google's edge — calls made immediately after enabling sometimes still return the "not enabled" error during this window
 
-URL: `https://console.cloud.google.com/auth/audience`
+**Verify it worked:**
+```
+https://console.cloud.google.com/apis/api/drive.googleapis.com/metrics?project=<PROJECT_ID>
+```
+Should show a metrics dashboard (will be empty until first call).
 
-Manually add every Gmail address that needs to authorize Drive during the testing phase. Limit: 100. Refresh tokens in Testing mode expire after 7 days.
+### 1.3 Configure the OAuth consent screen (one-time per project)
 
-Skip this step once verification is approved.
+Skip this section if you already configured it for Calendar/login OAuth.
+
+**URL:** https://console.cloud.google.com/auth/overview
+
+Steps:
+1. **Get started** (only appears first time)
+2. **App information:**
+   - **App name**: `Atendia` (this is what users see on the consent screen)
+   - **User support email**: your email
+3. **Audience type:**
+   - **External** (recommended for SaaS) — any Google account can log in once verified; during Testing mode only listed test users
+   - **Internal** (only if you have Google Workspace) — only accounts in your Workspace domain
+4. **Contact information**: your email
+5. **Agree to Google's terms** → **Continue**
+6. **Create**
+
+After creation you can edit it at https://console.cloud.google.com/auth/branding to add your logo, app domain, privacy policy URL, and terms of service URL. **Privacy policy and ToS are required to submit for verification** (see §8.2) but not required during Testing mode.
+
+### 1.4 Add the `drive.readonly` scope
+
+**URL:** https://console.cloud.google.com/auth/scopes
+
+Steps:
+1. Verify the project selector at the top shows the right project
+2. Click **Add or remove scopes** (large button)
+3. A side panel opens with a scope filter at the top
+4. In the filter, paste either:
+   - `https://www.googleapis.com/auth/drive.readonly` (the full URL), or
+   - `drive.readonly` (just the suffix — Google filters)
+5. Tick the checkbox next to the scope. The display label reads: **"See and download all your Google Drive files"**
+6. Click **Update** at the bottom of the side panel
+7. The scope now appears in the "Your sensitive scopes" or "Your restricted scopes" list (Drive readonly is **Restricted**)
+8. Scroll to the bottom of the page → click **Save**
+
+> ⚠ **Restricted scope warning.** `drive.readonly` is a Google "Restricted" scope. Implications:
+> - **Testing mode** → works fine, but each user must be added as a test user (§1.6). Refresh tokens expire after 7 days.
+> - **Production** → requires Google verification + third-party security assessment. Costs $5k–$15k/yr from approved firms (Bishop Fox, Leviathan, NCC Group, etc.). Review takes 4–8 weeks.
+> - **Workaround if cost is prohibitive:** switch to `drive.file` scope (non-restricted) + Google Picker UI. See §8.3 for the migration path.
+
+### 1.5 Add the Drive callback redirect URI to your OAuth client
+
+**URL:** https://console.cloud.google.com/auth/clients
+
+Steps:
+1. You'll see a list of OAuth 2.0 Client IDs. Find your Web client (Type column = "Web application"). If you don't have one yet, **Create client** → Application type **Web application** → name it `Atendia` → continue
+2. Click on the client name (or the pencil/edit icon)
+3. Scroll to **Authorized redirect URIs**
+4. Click **+ Add URI** and paste your production callback URL:
+   ```
+   https://<YOUR_PROD_DOMAIN>/api/google-drive/callback
+   ```
+   Examples:
+   - `https://atendia.uy/api/google-drive/callback`
+   - `https://app.atendia.uy/api/google-drive/callback`
+5. If you want the same OAuth client to also work for local development, click **+ Add URI** again and add:
+   ```
+   http://localhost:5173/api/google-drive/callback
+   ```
+6. Click **Save** at the bottom
+
+> 💡 You can have many redirect URIs on the same client. Add one per environment (prod, staging, local). Google enforces an exact-match check — `https://atendia.uy/` vs `https://atendia.uy` differ; `http://` vs `https://` differ; trailing slash differs. Paste verbatim.
+
+**Copy the Client ID and Secret** from the same page:
+- **Client ID** — looks like `269432817235-xxx.apps.googleusercontent.com`
+- **Client secret** — looks like `GOCSPX-xxxxxxxxx`. If you don't see the secret displayed, click **Reset Secret** to generate a new one. ⚠ Resetting invalidates the old secret — any other app using it will break.
+
+These two values go into both your **Convex env** and your **Node server env** in §2.
+
+### 1.6 Add test users (Testing mode only)
+
+Skip this if you've submitted for verification AND been approved.
+
+**URL:** https://console.cloud.google.com/auth/audience
+
+Steps:
+1. Verify project selector
+2. Scroll to **Test users** section
+3. Click **+ Add users**
+4. Paste Gmail addresses (one per line, or comma-separated, up to 100 total)
+5. Click **Add** → **Save**
+
+> ⚠ **Quirks:**
+> - Changes can take a few minutes to propagate. If a user gets `access_denied` immediately after being added, wait 2-5 min and retry.
+> - Some restricted scopes force re-validation of test users when the scope set changes. If you add `drive.readonly` to an existing consent screen, you may need to re-add test users.
+> - Refresh tokens issued in Testing mode **expire after 7 days**. Users will need to re-consent weekly. This is a Google limitation, not configurable.
+
+### 1.7 (Optional but recommended) Verification submission
+
+**Required to go truly public** with `drive.readonly`. Not required for internal teams using Testing mode.
+
+URL: https://console.cloud.google.com/auth/verification
+
+Requirements at minimum:
+- Privacy Policy URL (must be reachable, mention each scope's use)
+- Terms of Service URL
+- App home page URL
+- Authorized domains list (e.g. `atendia.uy`)
+- **YouTube demo video** showing the OAuth flow + how each scope is used
+- **Annual independent security assessment** (mandatory for restricted scopes — $5k–$15k from a Google-approved CASA assessor)
+
+Review takes 4-8 weeks for first-time apps. Plan accordingly.
+
+### 1.8 Final verification checklist before §2
+
+Before moving to env var setup, confirm in the Cloud Console:
+
+- [ ] You're in the correct project (top-bar selector matches your Project ID)
+- [ ] Google Drive API is enabled (§1.2 verify URL shows the metrics page, not a "Get started" page)
+- [ ] OAuth consent screen exists with an app name set
+- [ ] `https://www.googleapis.com/auth/drive.readonly` appears in the scopes list
+- [ ] Your OAuth Web client has the production callback URI added
+- [ ] (Testing mode) every user who needs Drive access is in the test users list
+- [ ] You've copied the OAuth Client ID and Client Secret to a secure scratchpad
 
 ---
 
