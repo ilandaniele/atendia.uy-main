@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  atendia-web:
+    container_name: atendia_dev
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      # --- NUEVO: Pasar argumentos al Dockerfile ---
+      args:
+        - VITE_CONVEX_URL=${VITE_CONVEX_URL}
+        - VITE_SITE_URL=${VITE_SITE_URL}
+        - VITE_CONVEX_SITE_URL=${VITE_CONVEX_SITE_URL}
+        - VITE_VAPID_PUBLIC_KEY=${VITE_VAPID_PUBLIC_KEY}
+        
+    restart: unless-stopped
+    
+    ports:
+      - "3002:3000"
+      
+    environment:
+      - NODE_ENV=dev
+      # .env
+      - VITE_SITE_URL=${VITE_SITE_URL}
+      - SITE_URL=${SITE_URL}
+      - SENDGRID_ACCOUNT_SID=${SENDGRID_ACCOUNT_SID}
+      - VITE_VAPID_PUBLIC_KEY=${VITE_VAPID_PUBLIC_KEY}
+
+      # .env.development
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - DLOCALGO_API_URL=${DLOCALGO_API_URL}
+      - DLOCALGO_API_KEY=${DLOCALGO_API_KEY}
+      - DLOCALGO_SECRET_KEY=${DLOCALGO_SECRET_KEY}
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URL=${GOOGLE_REDIRECT_URL}
+      - GOOGLE_RECAPTCHA_ID=${GOOGLE_RECAPTCHA_ID}
+      - WHAPI_PARTNER_API_KEY=${WHAPI_PARTNER_API_KEY}
+      - GOOGLE_CALENDAR_CLIENT_ID=${GOOGLE_CALENDAR_CLIENT_ID}
+      - GOOGLE_CALENDAR_CLIENT_SECRET=${GOOGLE_CALENDAR_CLIENT_SECRET}
+
+      # .env.local
+      - CONVEX_DEPLOYMENT=${CONVEX_DEPLOYMENT}
+      - VITE_CONVEX_URL=${VITE_CONVEX_URL}
+      - VITE_CONVEX_SITE_URL=${VITE_CONVEX_SITE_URL}
+
+    deploy:
+      resources:
+        limits:
+          memory: 1G

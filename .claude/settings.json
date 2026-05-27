@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"const c = require\\('./node_modules/convex/dist/esm-types/server/index.d.ts'\\); console.log\\('ok'\\)\")",
+      "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
+      "Bash(grep -E \"\\\\.tsx$\")",
+      "Bash(echo \"exit=$?\")",
+      "Bash(grep -i \"\\\\.\\\\\\(tsx\\\\|ts\\\\|jsx\\\\|js\\\\\\)$\")",
+      "Bash(Select-String -Pattern \"\\(convex|app|src\\)\")",
+      "Bash(Get-ChildItem -Path \"c:\\\\Web\\\\Node\\\\atendia.uy\" -Recurse -Filter \"*.ts\" -Name)",
+      "Bash(Select-String \"convex\")",
+      "Bash(rm c:/Users/maram/.claude/projects/c--Web-Node-atendia-uy/memory/project_dev_login.md)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\maram\\.claude\\projects\\c--Web-Node-atendia-uy\\memory"
+    ]
+  }
+}

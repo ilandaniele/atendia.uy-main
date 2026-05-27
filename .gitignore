@@ -1,0 +1,26 @@
+.DS_Store
+/node_modules/
+
+# React Router
+/.react-router/
+/build/
+
+# Env
+.env
+.env.local
+.env.development
+
+# Convex local cache
+/.convex/
+
+# IDE
+/.vscode/
+/.idea/
+
+# OS / misc
+Thumbs.db
+*.log
+
+# Scratch / screenshots (e.g., pasted images)
+image.png
+image*.png
